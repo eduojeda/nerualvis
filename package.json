@@ -1,0 +1,14 @@
+{
+  "name": "neuralvis",
+  "version": "0.0.1",
+  "description": "Simple 3D neural network visualizer",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eduojeda/neuralvis.git"
+  },
+  "author": "Eduardo Ojeda",
+  "license": "MIT",
+  "dependencies": {
+    "three": "^0.85.2"
+  }
+}
