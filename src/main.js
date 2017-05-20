@@ -1,7 +1,11 @@
-const INPUT_DIM = 64;
+const INPUT_DIM = 20;
+const PIXEL_SIZE = 0.1;
+
+let mouse = new THREE.Vector2();
 
 function main() {
     let scene = new THREE.Scene();
+    let raycaster = new THREE.Raycaster();
 
     let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 0, 5);
@@ -22,30 +26,39 @@ function main() {
 
     let controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-    for (let x = 0 ; x < 7 ; x++) {
-        for (let y = 0 ; y < 5 ; y++) {
-            scene.add(generatePixel(0 + x * 1.1, 0 + y * 1.1, 0));
+    for (let x = 0 ; x < INPUT_DIM ; x++) {
+        for (let y = 0 ; y < INPUT_DIM ; y++) {
+            scene.add(generatePixel(x * (PIXEL_SIZE + 0.01), y * (PIXEL_SIZE + 0.01), 0));
         }
     }
-    // for (let i = 0 ; i < INPUT_DIM * INPUT_DIM ; i++) {
-    //     let x = i % INPUT_DIM;
-    //     let y = i / INPUT_DIM;
-    //
-    //
-    // }
 
     let update = () => {
         window.requestAnimationFrame(update);
 
-        controls.update();
+        raycaster.setFromCamera(mouse, camera);
+
+        let intersects = raycaster.intersectObjects(scene.children);
+        for (let i = 0; i < intersects.length; i++) {
+            intersects[i].object.material.color.set(0xff0000);
+        }
+
+        //controls.update(); // todo needed?
         renderer.render(scene, camera);
     };
 
+    document.addEventListener('mousemove', mouseMove, false);
     update();
 }
 
+function mouseMove(event) {
+    event.preventDefault();
+
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+}
+
 function generatePixel(x, y, z) {
-    let geometry = new THREE.BoxGeometry(1, 1, 0.1);
+    let geometry = new THREE.BoxGeometry(0.1, 0.1, 0.01);
     let material = new THREE.MeshStandardMaterial({color: 0xaaaaaa});
     let pixel = new THREE.Mesh(geometry, material);
     pixel.position.set(x, y, z);
