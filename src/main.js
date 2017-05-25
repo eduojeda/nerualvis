@@ -1,14 +1,15 @@
-const INPUT_DIM = 20;
-const PIXEL_SIZE = 0.1;
+const PIXEL_SIZE = 1;
+const NEURON_SIZE = 0.5;
 
 let mouse = new THREE.Vector2();
+let isDrawing = false;
 
 function main() {
     let scene = new THREE.Scene();
     let raycaster = new THREE.Raycaster();
 
     let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 5);
+    camera.position.set(0, 0, 30);
     camera.lookAt(scene.position);
 
     let renderer = new THREE.WebGLRenderer({antialias: true});
@@ -24,28 +25,31 @@ function main() {
     scene.add(light);
     scene.add(new THREE.AmbientLight(0x111111));
 
-    let controls = new THREE.OrbitControls(camera, renderer.domElement);
+    drawAsSquare(scene, drawPixel, 400, 0);
+    drawAsSquare(scene, drawNeuron, 400, 0);
+    drawAsSquare(scene, drawNeuron, 25, -10);
+    drawAsLine(scene, drawNeuron, 10, -20);
 
-    for (let x = 0 ; x < INPUT_DIM ; x++) {
-        for (let y = 0 ; y < INPUT_DIM ; y++) {
-            scene.add(generatePixel(x * (PIXEL_SIZE + 0.01), y * (PIXEL_SIZE + 0.01), 0));
-        }
-    }
+    let controls = new THREE.OrbitControls(camera, renderer.domElement);
 
     let update = () => {
         window.requestAnimationFrame(update);
 
         raycaster.setFromCamera(mouse, camera);
 
-        let intersects = raycaster.intersectObjects(scene.children);
-        for (let i = 0; i < intersects.length; i++) {
-            intersects[i].object.material.color.set(0xff0000);
+        if (isDrawing) {
+            let intersects = raycaster.intersectObjects(scene.children);
+            if (intersects.length > 0) controls.enabled = false;
+            for (let i = 0; i < intersects.length; i++) {
+                intersects[i].object.material.color.set(0xff0000);
+            }
         }
 
-        //controls.update(); // todo needed?
         renderer.render(scene, camera);
     };
 
+    document.addEventListener('mousedown', () => {isDrawing = true; }, false);
+    document.addEventListener('mouseup', () => {isDrawing = false; controls.enabled = true;}, false);
     document.addEventListener('mousemove', mouseMove, false);
     update();
 }
@@ -57,13 +61,39 @@ function mouseMove(event) {
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 }
 
-function generatePixel(x, y, z) {
-    let geometry = new THREE.BoxGeometry(0.1, 0.1, 0.01);
-    let material = new THREE.MeshStandardMaterial({color: 0xaaaaaa});
+function drawAsSquare(scene, callback, count, z) {
+    let side = Math.sqrt(count);
+    let offset = -side * PIXEL_SIZE / 2; // todo PIXEL_SIZE -> VOXEL_SIZE?
+    for (let i = 0 ; i < count ; i++) {
+        let x = i % (side);
+        let y = Math.floor(i / side);
+        scene.add(callback(x * (NEURON_SIZE * 2) + offset, y * (NEURON_SIZE * 2) + offset, z));
+    }
+}
+
+function drawAsLine(scene, callback, count, z) {
+    let offset = -count * PIXEL_SIZE / 2; // todo PIXEL_SIZE -> VOXEL_SIZE?
+    for (let x = 0 ; x < count ; x++) {
+        scene.add(callback(x * (NEURON_SIZE * 2) + offset, 0, z));
+    }
+}
+
+function drawPixel(x, y, z) {
+    let geometry = new THREE.BoxGeometry(PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE / 10);
+    let material = new THREE.MeshLambertMaterial({color: 0xaaaaaa, transparent: true, opacity: 0.8});
     let pixel = new THREE.Mesh(geometry, material);
     pixel.position.set(x, y, z);
 
     return pixel;
+}
+
+function drawNeuron(x, y, z) {
+    let geometry = new THREE.SphereGeometry(NEURON_SIZE, 32, 32);
+    let material = new THREE.MeshLambertMaterial({color: 0x3333ff, transparent: true, opacity: 0.8});
+    let neuron = new THREE.Mesh(geometry, material);
+    neuron.position.set(x, y, z);
+
+    return neuron;
 }
 
 window.onload = () => main();
