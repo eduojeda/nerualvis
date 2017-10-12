@@ -8,6 +8,7 @@ export default class Neuron {
     private inputs: Link[];
     private outputs: Link[];
     private activationFunction: ActivationFunction;
+    private mesh: THREE.Mesh;
 
     constructor(id: string, bias: number) {
         this.id = id;
@@ -33,5 +34,13 @@ export default class Neuron {
 
     public getId(): string {
         return this.id;
+    }
+
+    public getMesh(): THREE.Mesh {
+        return this.mesh;
+    }
+
+    public setMesh(mesh: THREE.Mesh) {
+        this.mesh = mesh;
     }
 }

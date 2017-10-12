@@ -5,8 +5,9 @@ import NetworkRenderer from "./NetworkRenderer";
 function main() {
     let isDrawing: boolean;
 
-    let network = new Network([400, 20, 10], Sigmoid);
+    let network = new Network([400, 100, 10], Sigmoid);
     let renderer = new NetworkRenderer(network);
+    renderer.initScene();
 
     document.body.appendChild(renderer.getDomElement());
 

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import OrbitControls from 'orbit-controls-es6';
 import Network from "./model/Network";
+import Neuron from "./model/Neuron";
 
 const PIXEL_SIZE = 1;
 const NEURON_SIZE = 0.5;
@@ -22,11 +23,9 @@ export default class NetworkRenderer {
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.controls = new OrbitControls(this.camera, this.getDomElement());
         this.mouse = new THREE.Vector2();
-
-        this.init();
     }
 
-    init() {
+    public initScene() {
         this.camera.position.set(0, 0, 30);
         this.camera.lookAt(this.scene.position);
 
@@ -40,13 +39,10 @@ export default class NetworkRenderer {
         this.scene.add(light);
         this.scene.add(new THREE.AmbientLight(0x111111));
 
-        this.drawAsSquare(this.scene, this.drawPixel, 400, 0);
-        this.drawAsSquare(this.scene, this.drawNeuron, 400, 0);
-        this.drawAsSquare(this.scene, this.drawNeuron, 25, -10);
-        this.drawAsLine(this.scene, this.drawNeuron, 10, -20);
+        this.generateMeshes();
     }
 
-    render() {
+    public render() {
         window.requestAnimationFrame(this.render.bind(this));
 
         this.raycaster.setFromCamera(this.mouse, this.camera);
@@ -62,28 +58,68 @@ export default class NetworkRenderer {
         this.renderer.render(this.scene, this.camera);
     };
 
-    getDomElement(): HTMLCanvasElement {
+    public getDomElement(): HTMLCanvasElement {
         return this.renderer.domElement;
     }
 
-    drawAsSquare(scene: THREE.Scene, callback: Function, count: number, z: number) {
-        let side: number = Math.sqrt(count);
-        let offset: number = -side * PIXEL_SIZE / 2; // todo PIXEL_SIZE -> VOXEL_SIZE?
+    public getControls(): THREE.OrbitControls {
+        return this.controls;
+    }
+
+    public setMouse(x: number, y: number) {
+        this.mouse.x = x;
+        this.mouse.y = y;
+    }
+
+    private generateMeshes() {
+        this.createPixelMatrix(this.network.getInputLayer().length, 0);
+
+        this.arrangeLayerAsMatrix(this.network.getInputLayer(), -2);
+
+        for (const layer of this.network.getHiddenLayers()) {
+            this.arrangeLayerAsMatrix(layer, -10)
+        }
+
+        this.arrangeLayerAsLine(this.network.getOutputLayer(), -20);
+    }
+
+    private arrangeLayerAsMatrix(layer: Neuron[], z: number) {
+        const count: number = layer.length;
+        const side: number = Math.sqrt(count);
+        const offset: number = -side * PIXEL_SIZE / 2;
+
         for (let i: number = 0 ; i < count ; i++) {
             let x: number = i % (side);
             let y: number = Math.floor(i / side);
-            scene.add(callback(x * (NEURON_SIZE * 2) + offset, y * (NEURON_SIZE * 2) + offset, z));
+            layer[i].setMesh(NetworkRenderer.buildNeuronMesh(x * (NEURON_SIZE * 2) + offset, y * (NEURON_SIZE * 2) + offset, z));
+
+            this.scene.add(layer[i].getMesh());
         }
     }
 
-    drawAsLine(scene: THREE.Scene, callback: Function, count: number, z: number) {
-        let offset: number = -count * PIXEL_SIZE / 2; // todo PIXEL_SIZE -> VOXEL_SIZE?
+    private arrangeLayerAsLine(layer: Neuron[], z: number) {
+        const count: number = layer.length;
+        const offset: number = -count * PIXEL_SIZE / 2;
+
         for (let x: number = 0 ; x < count ; x++) {
-            scene.add(callback(x * (NEURON_SIZE * 2) + offset, 0, z));
+            layer[x].setMesh(NetworkRenderer.buildNeuronMesh(x * (NEURON_SIZE * 2) + offset, 0, z));
+
+            this.scene.add(layer[x].getMesh());
         }
     }
 
-    drawPixel(x: number, y: number, z: number) {
+    private createPixelMatrix(count:number, z: number) {
+        const side: number = Math.sqrt(count);
+        const offset: number = -side * PIXEL_SIZE / 2;
+
+        for (let i: number = 0 ; i < count ; i++) {
+            let x: number = i % (side);
+            let y: number = Math.floor(i / side);
+            this.scene.add(NetworkRenderer.buildPixelMesh(x * PIXEL_SIZE + offset, y * PIXEL_SIZE + offset, z));
+        }
+    }
+
+    private static buildPixelMesh(x: number, y: number, z: number): THREE.Mesh {
         let geometry: THREE.Geometry = new THREE.BoxGeometry(PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE / 10);
         let material: THREE.Material = new THREE.MeshLambertMaterial({color: 0xaaaaaa, transparent: true, opacity: 0.8});
         let pixel: THREE.Mesh = new THREE.Mesh(geometry, material);
@@ -92,21 +128,12 @@ export default class NetworkRenderer {
         return pixel;
     }
 
-    drawNeuron(x: number, y: number, z: number) {
+    private static buildNeuronMesh(x: number, y: number, z: number): THREE.Mesh {
         let geometry: THREE.Geometry = new THREE.SphereGeometry(NEURON_SIZE, 32, 32);
         let material: THREE.Material = new THREE.MeshLambertMaterial({color: 0x3333ff, transparent: true, opacity: 0.8});
         let neuron: THREE.Mesh = new THREE.Mesh(geometry, material);
         neuron.position.set(x, y, z);
 
         return neuron;
-    }
-
-    getControls(): THREE.OrbitControls {
-        return this.controls;
-    }
-
-    setMouse(x: number, y: number) {
-        this.mouse.x = x;
-        this.mouse.y = y;
     }
 }

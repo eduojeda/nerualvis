@@ -37,4 +37,16 @@ export default class Network {
 
         this.layers.push(layer);
     }
+
+    public getInputLayer(): Neuron[] {
+        return this.layers[0];
+    }
+
+    public getHiddenLayers(): Neuron[][] {
+        return this.layers.slice(1, this.layers.length - 1);
+    }
+
+    public getOutputLayer(): Neuron[] {
+        return this.layers.slice(-1).pop();
+    }
 }
