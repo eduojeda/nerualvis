@@ -26,7 +26,7 @@ export default class Network {
 
             if (previousLayer) {
                 previousLayer.forEach(m => {
-                    const l = new Link(m.getId() + "-" + n.getId(), m, n, 1);
+                    const l = new Link(m.getId() + "-" + n.getId(), m, n, Math.random());
                     m.addOutput(l);
                     n.addInput(l);
                 });
@@ -48,5 +48,12 @@ export default class Network {
 
     public getOutputLayer(): Neuron[] {
         return this.layers.slice(-1).pop();
+    }
+
+    public getLinks(): Link[] {
+        let neurons: Neuron[] = this.layers.reduce((ac, layer) => ac.concat(layer));
+        let links = neurons.reduce((ac, neuron) => ac.concat(neuron.getOutputs()), []);
+
+        return links;
     }
 }

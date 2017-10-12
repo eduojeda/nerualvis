@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import OrbitControls from 'orbit-controls-es6';
 import Network from "./model/Network";
 import Neuron from "./model/Neuron";
+import {Link} from "./model/Link";
 
 const PIXEL_SIZE = 1;
 const NEURON_SIZE = 0.5;
@@ -81,6 +82,23 @@ export default class NetworkRenderer {
         }
 
         this.arrangeLayerAsLine(this.network.getOutputLayer(), -20);
+
+        this.drawLinks(this.network.getLinks());
+    }
+
+    private drawLinks(links: Link[]) {
+        links.map(link => {
+            if (link.getWeight() < 0.5) {
+                return;
+            }
+
+            let line: THREE.Line = NetworkRenderer.buildLink(
+                link.getSource().getMesh().getWorldPosition(),
+                link.getTarget().getMesh().getWorldPosition(),
+            );
+
+            this.scene.add(line);
+        });
     }
 
     private arrangeLayerAsMatrix(layer: Neuron[], z: number) {
@@ -117,6 +135,15 @@ export default class NetworkRenderer {
             let y: number = Math.floor(i / side);
             this.scene.add(NetworkRenderer.buildPixelMesh(x * PIXEL_SIZE + offset, y * PIXEL_SIZE + offset, z));
         }
+    }
+
+    private static buildLink(from: THREE.Vector3, to: THREE.Vector3): THREE.Line {
+        let geometry = new THREE.Geometry();
+        geometry.vertices.push(from);
+        geometry.vertices.push(to);
+        let material = new THREE.LineBasicMaterial({color: 0x00ff00});
+
+        return new THREE.Line(geometry, material);
     }
 
     private static buildPixelMesh(x: number, y: number, z: number): THREE.Mesh {

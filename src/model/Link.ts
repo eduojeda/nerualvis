@@ -20,4 +20,8 @@ export class Link {
     public getSource(): Neuron {
         return this.source;
     }
+
+    public getTarget(): Neuron {
+        return this.target;
+    }
 }

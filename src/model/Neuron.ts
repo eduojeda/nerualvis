@@ -26,6 +26,10 @@ export default class Neuron {
         this.outputs.push(l);
     }
 
+    public getOutputs(): Link[] {
+        return this.outputs;
+    }
+
     public update(): void {
         for (const input of this.inputs) {
             this.activation += input.getWeight() * this.activationFunction.func(input.getSource().activation);
